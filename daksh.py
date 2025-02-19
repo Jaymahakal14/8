@@ -570,6 +570,14 @@ def check_coins(message):
 @bot.message_handler(commands=['mahakal'])
 def add_user_with_days(message):
     reseller_id = str(message.chat.id)
+
+    # Reseller ka username fetch karna
+    try:
+        reseller_info = bot.get_chat(int(reseller_id))
+        reseller_username = f"@{reseller_info.username}" if reseller_info.username else f"UserID: {reseller_id}"
+    except:
+        reseller_username = f"UserID: {reseller_id}"
+
     if reseller_id in resellers:
         command = message.text.split()
         if len(command) == 3:
@@ -578,11 +586,18 @@ def add_user_with_days(message):
             cost = days * 5  # 1 day = 5 coins
 
             if resellers[reseller_id] >= cost:
+                # User ka username fetch karna
+                try:
+                    user_info = bot.get_chat(int(user_to_add))
+                    username = f"@{user_info.username}" if user_info.username else f"UserID: {user_to_add}"
+                except:
+                    username = f"UserID: {user_to_add}"
+
                 # Add user to allowed list
                 if user_to_add not in allowed_user_ids:
                     allowed_user_ids.append(user_to_add)
                     with open(USER_FILE, "a") as file:
-                        file.write(f"{user_to_add}\n")
+                        file.write(f"{user_to_add} {username}\n")  # Store both ID and username
 
                 # Deduct reseller coins
                 resellers[reseller_id] -= cost
@@ -594,19 +609,25 @@ def add_user_with_days(message):
 
                 # ✅ **Send Notification to Group**
                 try:
-                    bot.send_message("-1002302681156", f"🔔 Reseller {reseller_id} added user {user_to_add} for {days} days. {cost} coins deducted.")
-                    print(f"✅ Notification sent to group -1002302681156")
+                    bot.send_message(RESELLER_CHANNEL_ID, 
+                        f"🔔 *New User Added by Reseller*\n"
+                        f"👤 *Reseller:* {reseller_username}\n"
+                        f"👥 *User:* {username}\n"
+                        f"📅 *Duration:* {days} days\n"
+                        f"💰 *Coins Deducted:* {cost} (Remaining: {resellers[reseller_id]})",
+                        parse_mode='Markdown'
+                    )
                 except Exception as e:
                     print(f"❌ Failed to send notification: {e}")
 
-                bot.reply_to(message, f"✅ User {user_to_add} added for {days} days. Coins left: {resellers[reseller_id]}")
+                bot.reply_to(message, f"✅ User {username} added for {days} days.\n"
+                                      f"💰 Your Remaining Coins: {resellers[reseller_id]}")
             else:
                 bot.reply_to(message, "❌ Insufficient coins to add user.")
         else:
             bot.reply_to(message, "Usage: /mahakal <user_id> <days>")
     else:
         bot.reply_to(message, "❌ You are not a reseller.")
-
 
 # File to store blocked user IDs
 BLOCKED_FILE = "blocked_users.txt"
